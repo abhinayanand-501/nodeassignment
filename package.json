@@ -4,7 +4,7 @@
   "description": "The application is about stateless microservices",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "start": "node app.js"
   },
   "author": "Abhinay Anand",
   "license": "ISC",

@@ -45,44 +45,50 @@ router.post('/patch-json', tokenValidator, function(req, res){
 //Path - /api/thumbnail
 // It is used to download the image, resize the image and send the resized image as a response.
 router.post('/thumbnail',tokenValidator, function(req, res){
-    logger.infologger('Request came into thumbnail with the imageurl : '+req.body.imageurl);
-    let downloaddest = './downloadedfiles';
-    download.image({
-        url: req.body.imageurl,
-        dest: downloaddest
-    })
-    .then(({filename}) => {
-        logger.infologger('Download of the file completed with the file location : '+filename);
-        resizeimage({
-            images:[filename],
-            width:50,
-            height:50
+
+    if(!!req.body.imageurl && req.body.imageurl !==''){
+        logger.infologger('Request came into thumbnail with the imageurl : '+req.body.imageurl);
+        let downloaddest = './downloadedfiles';
+        download.image({
+            url: req.body.imageurl,
+            dest: downloaddest
         })
-        .then(()=> {
-            let imagetype = filename.split('.')[1];
-            fs.readFile(filename, function(err, data){
-                if(err) {
-                    logger.errorlogger('No image found at the path : '+filename);
-                    res.writeHead(400, {'Content-type':'text/html'})
-                    console.log(err);
-                    res.end("No such image");
-                } else {
-                    logger.infologger('Resizing of the image is successfully completed');
-                    res.writeHead(200,{'Content-type':'image/'+imagetype});
-                    res.end(data);
-                }
+        .then(({filename}) => {
+            logger.infologger('Download of the file completed with the file location : '+filename);
+            resizeimage({
+                images:[filename],
+                width:50,
+                height:50
+            })
+            .then(()=> {
+                let imagetype = filename.split('.')[1];
+                fs.readFile(filename, function(err, data){
+                    if(err) {
+                        logger.errorlogger('No image found at the path : '+filename);
+                        res.writeHead(400, {'Content-type':'text/html'})
+                        console.log(err);
+                        res.end("No such image");
+                    } else {
+                        logger.infologger('Resizing of the image is successfully completed');
+                        res.writeHead(200,{'Content-type':'image/'+imagetype});
+                        res.end(data);
+                    }
+                });
+            })
+            .catch((err)=>{
+                logger.errorlogger('Error while resizing the image');
+                res.status(404).send({status:404, error: err});
             });
         })
-        .catch((err)=>{
-            logger.errorlogger('Error while resizing the image');
-            res.status(404).send({status:404, error: err});
+        .catch((err) => {
+            console.log('Error is : '+ err);
+            logger.errorlogger('Error while downloading the image, maynot be a valid url');
+            res.status(404).send({status:404, error: 'File not found for downloading'})
         });
-    })
-    .catch((err) => {
-        console.log('Error is : '+ err);
-        logger.errorlogger('Error while downloading the image, maynot be a valid url');
-        res.status(404).send({status:404, error: 'File not found for downloading'})
-    });
+    } else {
+        logger.errorlogger('Image url is not defined or empty');
+        res.status(404).send({message: 'Please provide valid image url'});
+    }
 });
 
 module.exports = router;
